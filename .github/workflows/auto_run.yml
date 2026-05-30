@@ -1,4 +1,4 @@
-name: 自动拉取反代IP(狗妈奶爸专属版)
+name: 自动拉取反代IP(新仓库专属强推版)
 
 on:
   schedule:
@@ -40,14 +40,11 @@ jobs:
                 return None
 
         def generate_vless_from_api():
-            # 严格锁定目标：36002 (狗妈) 和 8143 (奶爸)
             TARGET_ASNS = {36002, 8143}
-            
             seen_ips = set()
             final_links = []
             counter = 0
 
-            # ================== 数据源一：CM 原始 JSON 接口 ==================
             print("正在同步源一 (CM-JSON)...")
             json_data = fetch_data_from_url("https://zip.cm.edu.kg/all.json")
             if json_data:
@@ -63,7 +60,7 @@ jobs:
                         if not isinstance(item, dict): continue
                         meta_data = item.get("meta", {})
                         asn = meta_data.get("asn")
-                        if asn not in TARGET_ASNS: continue  # 过滤非狗妈奶爸
+                        if asn not in TARGET_ASNS: continue
                         
                         port = item.get("_port") or meta_data.get("_port") or (item.get("port")[0] if isinstance(item.get("port"), list) and item.get("port") else 443)
                         country = meta_data.get("country", "US")
@@ -75,9 +72,8 @@ jobs:
                             counter += 1
                             final_links.append(f"{v4_ip}:{port}#CM_{org_name}_{country}_{counter:02d}")
                 except Exception as je:
-                    print(f"解析源一解析失败: {je}")
+                    print(f"解析源一失败: {je}")
 
-            # ================== 数据源二：全量精品大库文本 ==================
             print("正在同步源二 (全量精品库)...")
             txt_data = fetch_data_from_url("https://raw.githubusercontent.com/Alvin9999/new-pac/master/Cloudflare/all.txt")
             if txt_data:
@@ -85,22 +81,20 @@ jobs:
                 for line in lines:
                     line = line.strip()
                     if not line or "#" not in line: continue
-                    # 尝试捕捉备注里含有 gomami, neburst 关键字或者我们已知段的 IP
                     lower_line = line.lower()
                     if "gomami" in lower_line or "as36002" in lower_line:
                         org_name = "狗妈"
                     elif "neburst" in lower_line or "as8143" in lower_line:
                         org_name = "奶爸"
                     else:
-                        continue # 排除不需要的厂商
+                        continue
                     
                     try:
-                        # 提取前面的 IP 和端口
                         parts = line.split("#")[0].strip()
                         if ":" in parts:
                             ip, port = parts.split(":")[0], parts.split(":")[1]
                             if ip not in seen_ips:
-                                seen_ips.add(ip)
+                               .add(ip)
                                 counter += 1
                                 final_links.append(f"{ip}:{port}#CM_{org_name}_US_{counter:02d}")
                     except Exception:
@@ -108,23 +102,26 @@ jobs:
 
             total_links = len(final_links)
             if total_links == 0: 
-                print("非常遗憾，本轮在所有数据源中未搜寻到活跃的狗妈/奶爸IP")
+                print("未搜寻到活跃的狗妈/奶爸IP")
                 return
 
             output_filename = "vless_api_all.txt"
             with open(output_filename, 'w', encoding='utf8') as out_f:
                 for link in final_links: out_f.write(link + "\n")
-            print(f"【精准拦截成功】共洗出 {total_links} 个纯正的狗妈/奶爸独立优选IP！")
+            print(f"【精准拦截成功】共洗出 {total_links} 个独立优选IP。")
 
         if __name__ == "__main__":
             generate_vless_from_api()
         EOF
         python temp_script.py
 
+    # 4. 【新仓特调】直接本地建立分支并强行覆盖远程，不报 128 错
     - name: Commit and push changes
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add vless_api_all.txt
         git commit --allow-empty -m "自动刷新狗妈奶爸专属IP包"
-        git push origin HEAD
+        
+        # 针对全新仓库的无脑推连招：直接强行覆盖远程 main 分支
+        git push --force origin HEAD:main
