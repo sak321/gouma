@@ -1,4 +1,4 @@
-name: 自动拉取反代IP(新仓库专属强推版)
+name: 自动拉取反代IP(新仓库专属完美版)
 
 on:
   schedule:
@@ -94,7 +94,7 @@ jobs:
                         if ":" in parts:
                             ip, port = parts.split(":")[0], parts.split(":")[1]
                             if ip not in seen_ips:
-                               .add(ip)
+                                seen_ips.add(ip)  # 🛠️ 已经修复这里的拼写错误
                                 counter += 1
                                 final_links.append(f"{ip}:{port}#CM_{org_name}_US_{counter:02d}")
                     except Exception:
@@ -115,13 +115,11 @@ jobs:
         EOF
         python temp_script.py
 
-    # 4. 【新仓特调】直接本地建立分支并强行覆盖远程，不报 128 错
+    # 4. 强制推送覆盖远程
     - name: Commit and push changes
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add vless_api_all.txt
         git commit --allow-empty -m "自动刷新狗妈奶爸专属IP包"
-        
-        # 针对全新仓库的无脑推连招：直接强行覆盖远程 main 分支
         git push --force origin HEAD:main
