@@ -1,4 +1,4 @@
-name: 自动拉取反代IP(新仓库专属完美版)
+name: 自动拉取反代IP(新仓库无缝推通版)
 
 on:
   schedule:
@@ -15,6 +15,9 @@ jobs:
     steps:
     - name: Checkout repository code
       uses: actions/checkout@v4.2.2
+      with:
+        # 允许拉取全量历史，确保新仓能正常识别分支
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5.4.0
@@ -94,32 +97,3 @@ jobs:
                         if ":" in parts:
                             ip, port = parts.split(":")[0], parts.split(":")[1]
                             if ip not in seen_ips:
-                                seen_ips.add(ip)  # 🛠️ 已经修复这里的拼写错误
-                                counter += 1
-                                final_links.append(f"{ip}:{port}#CM_{org_name}_US_{counter:02d}")
-                    except Exception:
-                        continue
-
-            total_links = len(final_links)
-            if total_links == 0: 
-                print("未搜寻到活跃的狗妈/奶爸IP")
-                return
-
-            output_filename = "vless_api_all.txt"
-            with open(output_filename, 'w', encoding='utf8') as out_f:
-                for link in final_links: out_f.write(link + "\n")
-            print(f"【精准拦截成功】共洗出 {total_links} 个独立优选IP。")
-
-        if __name__ == "__main__":
-            generate_vless_from_api()
-        EOF
-        python temp_script.py
-
-    # 4. 强制推送覆盖远程
-    - name: Commit and push changes
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add vless_api_all.txt
-        git commit --allow-empty -m "自动刷新狗妈奶爸专属IP包"
-        git push --force origin HEAD:main
